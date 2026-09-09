@@ -4,7 +4,7 @@ import { uploadBinaryFile } from "./nativeUploadClient";
 import { GetIsAppActive, SubscribeIsAppActive } from "../app-state-context";
 import { StringUtils } from "@/client-side.Commons/helpers/string";
 import { InboundUploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
-import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from "@/client-side.Commons/dataLayer/apiSlice";
+import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from "@/client-side.Commons/dataLayer/core/apiSlice";
 import { APP_URLS } from "@/app.Impl/configs/app-urls";
 
 

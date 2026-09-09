@@ -3,11 +3,11 @@ import type { Location, ProviderChangeEvent } from '@transistorsoft/background-g
 import { AccuracyAuthorization, AuthorizationStatus } from '@transistorsoft/background-geolocation-types';
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
 import { APP_URLS } from '@/app.Impl/configs/app-urls';
-import { store } from '@/client-side.Commons/dataLayer/store';
-import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/hooks/locationApi';
-import { GPSLocation, GPSLocationAccuracy } from '@/client-side.Commons/model/gps-location';
+import { store } from '@/client-side.Commons/dataLayer/core/store';
+import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/api/locationApi';
+import { GPSLocation, GPSLocationAccuracy } from '@/client-side.Commons/dataLayer/model/gps-location';
 import { MathUtils } from '@/client-side.Commons/helpers/math-utils';
-import { AuthToken } from '@/client-side.Commons/dataLayer/apiSlice';
+import { AuthToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
 
 export function isLocationPermissionError(error: any): boolean {
     if (!error) return false;

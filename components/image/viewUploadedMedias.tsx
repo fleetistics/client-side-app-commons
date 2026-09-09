@@ -3,8 +3,8 @@ import { FlatList, Image, Modal, ScrollView, StatusBar, TouchableOpacity, View, 
 
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import type { UploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
-import { Button } from "@/app.Commons/controls/button";
-import { Text } from "@/app.Commons/controls/text";
+import { Button } from "@/app.Commons/components/controls/button";
+import { Text } from "@/app.Commons/components/controls/text";
 import { ChevronLeft, ChevronRight, X } from "@/components/ui/icons";
 
 

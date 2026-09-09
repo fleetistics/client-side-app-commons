@@ -1,4 +1,4 @@
-import { apiSlice } from '@/client-side.Commons/dataLayer/apiSlice';
+import { apiSlice } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
 import type { TranslationTable } from '@/client-side.Commons/i18n/translationTypes';
 

@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { View } from 'react-native';
-import { Text, TextClassContext } from '@/app.Commons/controls/text';
+import { Text, TextClassContext } from '@/app.Commons/components/controls/text';
 import { cn } from '@/uiColorScheme/utils';
 
 const alertVariants = cva(

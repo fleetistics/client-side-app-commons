@@ -1,9 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import type { RootState } from '@/client-side.Commons/dataLayer/store';
-import { useAppSelector } from '@/client-side.Commons/dataLayer/hooks';
+import type { RootState } from '@/client-side.Commons/dataLayer/core/store';
+import { useAppSelector } from '@/client-side.Commons/dataLayer/core/hooks';
 import { LocationProviderStatusEnum } from '@/app.Commons/services/location/locationService';
 import type { LocationProviderPrecision } from '@/app.Commons/services/location/locationService';
-import { GPSLocation } from '@/client-side.Commons/model/gps-location';
+import { GPSLocation } from '@/client-side.Commons/dataLayer/model/gps-location';
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
 
 // Plain, serializable snapshot of a LocationProviderStatus instance — Redux state/actions must

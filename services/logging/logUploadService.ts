@@ -1,7 +1,7 @@
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { gzip } from 'pako';
 
-import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from '@/client-side.Commons/dataLayer/apiSlice';
+import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { APP_URLS } from '@/app.Impl/configs/app-urls';
 import { ClientSideInfoProvider } from '@/app.Impl/userSession/ClientSideInfoProvider';
 import { clearLogFiles, LOG_FILES_DIR, listLogFiles } from './logFileTransport';

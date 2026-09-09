@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Button } from '@/app.Commons/controls/button';
+import { Button } from '@/app.Commons/components/controls/button';
 
 type SubmitButtonProps = Omit<React.ComponentProps<typeof Button>, 'children'> & {
   isSubmitting?: boolean;

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { View } from 'react-native';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
-import { Input } from '@/app.Commons/controls/input';
-import { Label } from '@/app.Commons/controls/label';
+import { Input } from '@/app.Commons/components/controls/input';
+import { Label } from '@/app.Commons/components/controls/label';
 
 type ControlFieldProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;

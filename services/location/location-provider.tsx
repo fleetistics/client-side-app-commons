@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import BackgroundGeolocation from 'react-native-background-geolocation';
 import { AuthorizationStatus } from '@transistorsoft/background-geolocation-types';
 import type { HttpEvent, HeartbeatEvent, Location, LocationError, ProviderChangeEvent, Subscription } from '@transistorsoft/background-geolocation-types';
-import { AuthToken } from '@/client-side.Commons/dataLayer/apiSlice';
+import { AuthToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { GlobalAlert } from '@/app.Commons/utils/global-alert';
 import { LocationService, LocationProviderStatus, LocationProviderStatusEnum, isLocationPermissionError } from './locationService';
 import { LOCATION_MESSAGES } from './location-messages';

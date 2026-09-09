@@ -2,11 +2,11 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 import { Camera, ImagePlus, Trash2, Video } from '@/components/ui/icons';
-import { Button } from '@/app.Commons/controls/button';
-import { Label } from '@/app.Commons/controls/label';
-import { FilterMediaHelper } from '@/app.Commons/controls/image/filter-medias-helper';
-import { OpenGallery, OpenPhoto, OpenVideo } from '@/app.Commons/controls/image/media-selector-helper';
-import { ViewUploadedMedias } from '@/app.Commons/controls/image/viewUploadedMedias';
+import { Button } from '@/app.Commons/components/controls/button';
+import { Label } from '@/app.Commons/components/controls/label';
+import { FilterMediaHelper } from '@/app.Commons/components/image/filter-medias-helper';
+import { OpenGallery, OpenPhoto, OpenVideo } from '@/app.Commons/components/image/media-selector-helper';
+import { ViewUploadedMedias } from '@/app.Commons/components/image/viewUploadedMedias';
 import type { UploadedMediaDto } from '@/app.Commons/dataLayer/model/uploadedMediaDto';
 import { MediaUploadService } from '@/app.Commons/services/media-uploader/mediaUploadService';
 
@@ -51,7 +51,7 @@ export function MediaSelector<TFieldValues extends FieldValues = FieldValues>({
                 removeItem={
                   readOnly
                     ? undefined
-                    : (item) => {
+                    : (item: UploadedMediaDto) => {
                         MediaUploadService.Dequeue(item.Guid);
                         onChange(FilterMediaHelper.RemoveSingleMedia(item, values));
                       }
@@ -66,7 +66,7 @@ export function MediaSelector<TFieldValues extends FieldValues = FieldValues>({
                     variant="outline"
                     size="icon"
                     onPress={() => {
-                      groupMedia?.forEach((item) => MediaUploadService.Dequeue(item.Guid));
+                      groupMedia?.forEach((item: UploadedMediaDto) => MediaUploadService.Dequeue(item.Guid));
                       onChange(FilterMediaHelper.RemoveAllGroupMedia(values, groupKey));
                     }}
                   >

@@ -1,4 +1,4 @@
-import { apiSlice } from '@/client-side.Commons/dataLayer/apiSlice';
+import { apiSlice } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { LocationService } from '@/app.Commons/services/location/locationService';
 
 import type { User, UserPatch, UserLocationPrivacyDto, UserLocationPrivacyPatch } from '../../../app.DataLayer/model/userDto';
