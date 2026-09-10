@@ -126,12 +126,15 @@ export class LocationService {
     }
 
     public CheckAndUpdateLocation(loc: Location):boolean {
+        //console.log(`LocationService::CheckAndUpdateLocation ${loc.timestamp}`,loc,this.mLatestLocation);
         this.mLatestPlatformLocation = loc;
         if ((!loc.coords.accuracy || loc.coords.accuracy < 60) && (loc.coords.latitude && loc.coords.longitude)) {
             let tmpTimeStamp = Math.floor( new Date(loc.timestamp).getTime() / 1000);
-            if (!this.mLatestLocation || ((this.mLatestLocation.TimeStamp && (tmpTimeStamp-this.mLatestLocation.TimeStamp) > 30 ) && (Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude) > 0.0003 || Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude) > 0.0003))) {
-                //console.log(`LocationService::UpdateLocation ${tmpTimeStamp}`,loc);
+            //if (this.mLatestLocation ) console.log(`LocationService::CheckAndUpdateLocation(tmpTimeStamp-this.mLatestLocation.TimeStamp) ${(tmpTimeStamp-this.mLatestLocation.TimeStamp!)} ${Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude)} ${Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude)}`);
+            if (this.mLatestLocation.TimeStamp === -1 || ((this.mLatestLocation.TimeStamp && (tmpTimeStamp-this.mLatestLocation.TimeStamp) > 30 ) && (Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude) > 0.0003 || Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude) > 0.0003))) {
+                
                 this.mLatestLocation = this.locationToGPSLocation(loc, tmpTimeStamp);
+                console.log(`LocationService::CheckAndUpdateLocation update was dispatched ${tmpTimeStamp}`,this.mLatestLocation);
                 store.dispatch(locationAcquired(this.mLatestLocation));
 
                 return true;
@@ -197,6 +200,9 @@ export class LocationService {
         console.log(`LocationService::applyReportLocationModeChange next=${next} (privateMode=${this.mPrivateMode}, reportLocationMode=${this.mReportLocationMode})`);
         try {
             if (!next) {
+                // Flush whatever is still queued while the current url/headers are valid,
+                // so nothing is left to sync later under a stale header (see onHttp handler).
+                await BackgroundGeolocation.sync();
                 await BackgroundGeolocation.setConfig({ http: { autoSync: false, url: '' } });
             } else {
                 await BackgroundGeolocation.setConfig({ http: { autoSync: true, url: APP_URLS.LOCATION_REPORT_URL, headers: {
@@ -213,7 +219,7 @@ export class LocationService {
     }
 
     protected mLatestPlatformLocation?: Location;
-    protected mLatestLocation: GPSLocation = {};
+    protected mLatestLocation: GPSLocation = {TimeStamp:-1};
     protected mProviderStatus: LocationProviderStatus = LocationProviderStatus.Denied();
     protected mPrivateMode: boolean = false;
     protected mReportLocationMode: boolean = APP_CONFIG.ReportLocationMode;

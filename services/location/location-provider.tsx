@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import BackgroundGeolocation from 'react-native-background-geolocation';
 import { AuthorizationStatus } from '@transistorsoft/background-geolocation-types';
 import type { HttpEvent, HeartbeatEvent, Location, LocationError, ProviderChangeEvent, Subscription } from '@transistorsoft/background-geolocation-types';
-import { AuthToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { GlobalAlert } from '@/app.Commons/utils/global-alert';
 import { LocationService, LocationProviderStatus, LocationProviderStatusEnum, isLocationPermissionError } from './locationService';
 import { LOCATION_MESSAGES } from './location-messages';
@@ -21,7 +21,6 @@ export function LocationProvider(props: { children: React.ReactNode, setIsLocati
     const { setIsLocationStarted } = props;
     const wasAuthorizedRef = useRef(true);
     const hasShownInitialWarningRef = useRef(false);
-    const nextAuthTokenUpdate = useRef(0);
 
     useEffect(() => {
         // Runs once per app start, after the OS permission prompt has actually been answered
@@ -41,25 +40,28 @@ export function LocationProvider(props: { children: React.ReactNode, setIsLocati
             .catch((error) => console.error('[LocationProvider] getProviderState failed', error));
 
         const onHttpSubscription: Subscription = BackgroundGeolocation.onHttp(async (response: HttpEvent) => {
-            if (response.status !== 200) {
-                if( response.status == 401) {
-                    let curDate = new Date().getTime();
-                    console.log(`[LocationProvider] onHttp 401 Unauthorized, updating auth token is needed ${(curDate > nextAuthTokenUpdate.current)} (curDate=${curDate}, nextAuthTokenUpdate=${nextAuthTokenUpdate.current})`);
-                    
-                    if(curDate > nextAuthTokenUpdate.current) {
-                        nextAuthTokenUpdate.current = curDate + 60000; // update auth token every 60 seconds
-                        await BackgroundGeolocation.setConfig({ http: { autoSync: true, url: APP_URLS.LOCATION_REPORT_URL, headers: {
-                            Authorization: `Bearer ${AuthToken.get() ?? ''}`
-                        } } });
-                        console.log(`[LocationProvider] onHttp 401 Unauthorized, auth token updated`);
-                        
-                    }
-                }                
-                else {
-                    console.warn('[LocationProvider] onHttp error', response);
-                    BackgroundGeolocation.logger.error(`HTTP failed [${response.status}] [${response.responseText}]`);
-                }
+            if (response.status === 200) return;
+
+            if (response.status !== 401) {
+                console.warn('[LocationProvider] onHttp error', response);
+                BackgroundGeolocation.logger.error(`HTTP failed [${response.status}] [${response.responseText}]`);
+                return;
             }
+
+            console.log('[LocationProvider] onHttp 401 Unauthorized, refreshing auth token');
+            // Shares apiSlice's single-flight refresh latch so a concurrent RTK Query
+            // request hitting 401 at the same time doesn't trigger a second refresh
+            // that invalidates this one's cookie (see MediaUploadService).
+            const refreshed = await refreshAccessToken(createStandaloneRefreshApi('locationReport'), {});
+            if (!refreshed) {
+                notifyAuthLost();
+                console.error('[LocationProvider] onHttp 401 Unauthorized, auth token refresh failed');
+                return;
+            }
+            await BackgroundGeolocation.setConfig({ http: { autoSync: true, url: APP_URLS.LOCATION_REPORT_URL, headers: {
+                Authorization: `Bearer ${AuthToken.get() ?? ''}`
+            } } });
+            console.log('[LocationProvider] onHttp 401 Unauthorized, auth token updated');
         });
         const onLocationSubscription: Subscription = BackgroundGeolocation.onLocation((location: Location) => {
             LocationService.GetInstance().CheckAndUpdateLocation(location);
