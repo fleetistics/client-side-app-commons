@@ -7,7 +7,7 @@ import { Label } from '@/app.Commons/components/controls/label';
 import { FilterMediaHelper } from '@/app.Commons/components/image/filter-medias-helper';
 import { OpenGallery, OpenPhoto, OpenVideo } from '@/app.Commons/components/image/media-selector-helper';
 import { ViewUploadedMedias } from '@/app.Commons/components/image/viewUploadedMedias';
-import type { UploadedMediaDto } from '@/app.Commons/dataLayer/model/uploadedMediaDto';
+import type { EditorUploadedMedia } from '@/client-side.Commons/dataLayer/model/uploaded-media';
 import { MediaUploadService } from '@/app.Commons/services/media-uploader/mediaUploadService';
 
 export type MediaSelectorProps<TFieldValues extends FieldValues = FieldValues> = {
@@ -38,7 +38,7 @@ export function MediaSelector<TFieldValues extends FieldValues = FieldValues>({
       control={control}
       name={name}
       render={({ field: { onChange, value } }) => {
-        const values = value as UploadedMediaDto[] | undefined;
+        const values = value as EditorUploadedMedia[] | undefined;
         const groupMedia = FilterMediaHelper.FilterMediaByGroup(values, groupKey);
 
         return (
@@ -51,7 +51,7 @@ export function MediaSelector<TFieldValues extends FieldValues = FieldValues>({
                 removeItem={
                   readOnly
                     ? undefined
-                    : (item: UploadedMediaDto) => {
+                    : (item: EditorUploadedMedia) => {
                         MediaUploadService.Dequeue(item.Guid);
                         onChange(FilterMediaHelper.RemoveSingleMedia(item, values));
                       }
@@ -66,7 +66,7 @@ export function MediaSelector<TFieldValues extends FieldValues = FieldValues>({
                     variant="outline"
                     size="icon"
                     onPress={() => {
-                      groupMedia?.forEach((item: UploadedMediaDto) => MediaUploadService.Dequeue(item.Guid));
+                      groupMedia?.forEach((item: EditorUploadedMedia) => MediaUploadService.Dequeue(item.Guid));
                       onChange(FilterMediaHelper.RemoveAllGroupMedia(values, groupKey));
                     }}
                   >

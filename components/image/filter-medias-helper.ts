@@ -1,9 +1,9 @@
-import type { UploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
+import type { EditorUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
 
 const DELETED_MARKER = '**Deleted**';
 
 export class FilterMediaHelper {
-    static HasMediaByGroup(medias?: UploadedMediaDto[], groupKey?: number): boolean {
+    static HasMediaByGroup(medias?: EditorUploadedMedia[], groupKey?: number): boolean {
         if (!medias) return false;
         else {
             for (let i = 0, len = medias.length; i < len; i++) {
@@ -16,10 +16,10 @@ export class FilterMediaHelper {
             return false;
         }
     }
-    static FilterMediaByGroup(medias?: UploadedMediaDto[], groupKey?: number): UploadedMediaDto[] | undefined {
+    static FilterMediaByGroup(medias?: EditorUploadedMedia[], groupKey?: number): EditorUploadedMedia[] | undefined {
         if (!medias) return undefined;
         else {
-            let res = medias.filter((e: UploadedMediaDto) => {
+            let res = medias.filter((e: EditorUploadedMedia) => {
                 if (e.PreviewUrl === DELETED_MARKER) return false;
                 else if (!groupKey && !e.GroupKey) return e;
                 else if (groupKey && groupKey == e.GroupKey) {
@@ -34,10 +34,10 @@ export class FilterMediaHelper {
     // Existing (server-known) media is soft-removed by marking PreviewUrl so
     // form-helper.ts can still pick up its Id for RemoveMediaIds on submit.
     // Media never saved to the server (no Id yet) is dropped outright.
-    static RemoveSingleMedia(item: UploadedMediaDto, medias?: UploadedMediaDto[]): UploadedMediaDto[] | undefined {
+    static RemoveSingleMedia(item: EditorUploadedMedia, medias?: EditorUploadedMedia[]): EditorUploadedMedia[] | undefined {
         if (!medias) return undefined;
         else {
-            let res = medias.reduce<UploadedMediaDto[]>((acc, e) => {
+            let res = medias.reduce<EditorUploadedMedia[]>((acc, e) => {
                 const isMatch = item.Id ? item.Id == e.Id : item.Url == e.Url;
                 if (!isMatch) acc.push(e);
                 else if (e.Id) acc.push({ ...e, PreviewUrl: DELETED_MARKER });
@@ -47,10 +47,10 @@ export class FilterMediaHelper {
             else return res;
         }
     }
-    static RemoveAllGroupMedia(medias?: UploadedMediaDto[], groupKey?: number): UploadedMediaDto[] | undefined {
+    static RemoveAllGroupMedia(medias?: EditorUploadedMedia[], groupKey?: number): EditorUploadedMedia[] | undefined {
         if (!medias) return undefined;
         else {
-            let res = medias.reduce<UploadedMediaDto[]>((acc, e) => {
+            let res = medias.reduce<EditorUploadedMedia[]>((acc, e) => {
                 const inGroup = groupKey ? e.GroupKey == groupKey : !e.GroupKey;
                 if (e.PreviewUrl === DELETED_MARKER || !inGroup) acc.push(e);
                 else if (e.Id) acc.push({ ...e, PreviewUrl: DELETED_MARKER });

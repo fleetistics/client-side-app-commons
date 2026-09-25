@@ -3,12 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { uploadBinaryFile } from "./nativeUploadClient";
 import { GetIsAppActive, SubscribeIsAppActive } from "../app-state-context";
 import { StringUtils } from "@/client-side.Commons/helpers/string";
-import { InboundUploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
+import { ServerInboundUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
 import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from "@/client-side.Commons/dataLayer/core/apiSlice";
 import { APP_URLS } from "@/app.Impl/configs/app-urls";
 
 
-
+export function StartMediaUpload(patch: any) {
+    if (patch.InsertMedias && Array.isArray(patch.InsertMedias)) {
+        MediaUploadService.Enqueue(patch.InsertMedias);
+    }
+}
 
 type UploadQueueItem = {
     guid: string,
@@ -23,7 +27,7 @@ export class MediaUploadService {
         this.getInstance().enqueueSingleMedia(guid, url, mediaType);
     }
 
-    public static Enqueue(medias: InboundUploadedMediaDto[]) {
+    public static Enqueue(medias: ServerInboundUploadedMedia[]) {
         for (let i = 0, n = medias.length; i < n; i++) {
             this.getInstance().enqueueSingleMedia(medias[i].Guid ?? "", medias[i].Url ?? "", medias[i].MediaType ?? 0);
         }

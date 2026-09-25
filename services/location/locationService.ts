@@ -4,7 +4,7 @@ import { AccuracyAuthorization, AuthorizationStatus } from '@transistorsoft/back
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
 import { APP_URLS } from '@/app.Impl/configs/app-urls';
 import { store } from '@/client-side.Commons/dataLayer/core/store';
-import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/api/locationApi';
+import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/api/other/locationApi';
 import { GPSLocation, GPSLocationAccuracy } from '@/client-side.Commons/dataLayer/model/gps-location';
 import { MathUtils } from '@/client-side.Commons/helpers/math-utils';
 import { AuthToken } from '@/client-side.Commons/dataLayer/core/apiSlice';

@@ -1,7 +1,7 @@
 import { apiSlice } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { APP_URLS } from '@/app.Impl/configs/app-urls';
 
-import type { MyUserEmergencyAlertDto } from '@/app.Commons/dataLayer/model/myUserEmergencyAlertDto';
+import type { MyUserEmergencyAlertDto } from '@/app.Commons/dataLayer/model/user/myUserEmergencyAlertDto';
 
 type EmergencyAlertLocation = {
   latitude?: number;

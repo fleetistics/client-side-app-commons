@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { FlatList, Image, Modal, ScrollView, StatusBar, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import type { UploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
+import type { EditorUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
 import { Button } from "@/app.Commons/components/controls/button";
 import { Text } from "@/app.Commons/components/controls/text";
 import { ChevronLeft, ChevronRight, X } from "@/components/ui/icons";
@@ -10,9 +10,9 @@ import { ChevronLeft, ChevronRight, X } from "@/components/ui/icons";
 
 export function ViewUploadedMedias(props: {
   height?: number,
-  files: Array<UploadedMediaDto>,
+  files: Array<EditorUploadedMedia>,
   removeFile?: (idx: number) => void,
-  removeItem?: (item: UploadedMediaDto) => void,
+  removeItem?: (item: EditorUploadedMedia) => void,
   selectedItem?: number
 }) {
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -58,12 +58,12 @@ export function ViewUploadedMedias(props: {
 
 function FullScreenImageViewer(props: {
   visible: boolean,
-  images: Array<UploadedMediaDto>,
+  images: Array<EditorUploadedMedia>,
   initialIndex: number,
   onClose: () => void,
 }) {
   const insets = useSafeAreaInsets();
-  const listRef = useRef<FlatList<UploadedMediaDto>>(null);
+  const listRef = useRef<FlatList<EditorUploadedMedia>>(null);
   const [currentIndex, setCurrentIndex] = useState(props.initialIndex);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 

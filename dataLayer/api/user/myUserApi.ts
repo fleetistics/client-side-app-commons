@@ -1,7 +1,7 @@
 import { apiSlice } from '@/client-side.Commons/dataLayer/core/apiSlice';
 import { LocationService } from '@/app.Commons/services/location/locationService';
 
-import type { User, UserPatch, UserLocationPrivacyDto, UserLocationPrivacyPatch } from '../../../app.DataLayer/model/userDto';
+import type { User, UserPatch, UserLocationPrivacyDto, UserLocationPrivacyPatch } from '../../model/user/userDto';
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
 const BASE_USERS_URL = APP_CONFIG.BASE_API_URL + 'users';
 const LOCATION_PRIVACY_URL = BASE_USERS_URL + '/me/location-privacy';

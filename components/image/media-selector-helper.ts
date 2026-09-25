@@ -3,7 +3,7 @@ import ImagePicker, { ImageOrVideo, Image as PickerImage } from "react-native-im
 import { v4 as uuidv4 } from "uuid";
 
 import { openSettings, PERMISSIONS, request, requestMultiple, RESULTS } from "react-native-permissions";
-import { MediaType, UploadedMediaDto } from "@/app.Commons/dataLayer/model/uploadedMediaDto";
+import { MediaType, EditorUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
 import { APP_CONFIG } from "@/app.Impl/configs/app-config";
 import { MediaUploadService } from "@/app.Commons/services/media-uploader/mediaUploadService";
 
@@ -26,21 +26,21 @@ function mediaTypeParser(mimeType: string | undefined): MediaType {
     return MediaType.File;
 }
 
-export function OpenVideo(onChange: (event: any[]) => void, value: UploadedMediaDto[], singleMode: boolean = false, groupKey?: number) {
+export function OpenVideo(onChange: (event: any[]) => void, value: EditorUploadedMedia[], singleMode: boolean = false, groupKey?: number) {
     selectMedia("video", onChange, value, singleMode, groupKey);
 }
-export function OpenPhoto(onChange: (event: any[]) => void, value: UploadedMediaDto[], singleMode: boolean = false, groupKey?: number) {
+export function OpenPhoto(onChange: (event: any[]) => void, value: EditorUploadedMedia[], singleMode: boolean = false, groupKey?: number) {
     selectMedia("photo", onChange, value, singleMode, groupKey);
 }
-export function OpenGallery(onChange: (event: any[]) => void, value: UploadedMediaDto[], singleMode: boolean = false, groupKey?: number) {
+export function OpenGallery(onChange: (event: any[]) => void, value: EditorUploadedMedia[], singleMode: boolean = false, groupKey?: number) {
     selectMedia("gallery", onChange, value, singleMode, groupKey);
 }
-async function selectMedia(option: "photo" | "video" | "gallery", onChange: (event: any[]) => void, value: UploadedMediaDto[], singleMode: boolean = false, groupKey?: number) {
-    const cropMediaResponseHandler = async (images: ImageOrVideo[], value: Array<UploadedMediaDto>, singleMode: boolean) => {
+async function selectMedia(option: "photo" | "video" | "gallery", onChange: (event: any[]) => void, value: EditorUploadedMedia[], singleMode: boolean = false, groupKey?: number) {
+    const cropMediaResponseHandler = async (images: ImageOrVideo[], value: Array<EditorUploadedMedia>, singleMode: boolean) => {
         //console.log('mediaResponseHandler step #1');
 
         //console.log('mediaResponseHandler step #2');
-        let selectedUploadeMedias: UploadedMediaDto[] = [];
+        let selectedUploadeMedias: EditorUploadedMedia[] = [];
 
         for (const image of images) {
             //console.log('mediaResponseHandler image', image);
@@ -54,8 +54,9 @@ async function selectMedia(option: "photo" | "video" | "gallery", onChange: (eve
                     Guid: uuidv4(),
                     GroupKey: groupKey,
                     MediaType: mediaTypeParser(image.mime),
-                    Url: url
-                } as UploadedMediaDto;
+                    Url: url,
+                    PreviewUrl: url
+                } as EditorUploadedMedia;
                 //if (image.modificationDate) {
                     //newMedia.creationDate = image.modificationDate.length >10?parseInt(image.modificationDate.substring(0,9)):parseInt(image.modificationDate);
                 //}

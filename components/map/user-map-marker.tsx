@@ -71,81 +71,91 @@ export const UserMapMarker = React.forwardRef<MapMarker, UserMapMarkerProps>(
         // marker height stays constant; the dot's own center sits at cy=26 within that 40px row
         const totalH = 40 + 24;
         const dotCenterY = 26;
-        const anchorY = dotCenterY / totalH;
+        // a marker's tap target is exactly its rendered frame — hitSlop does nothing here (the
+        // native marker is an annotation view / bitmap, not an RN touchable), so the only way to
+        // make the small dot easier to hit is to pad the frame out with transparent space
+        const touchPad = 14;
+        const frameW = labelWidth + touchPad * 2;
+        const frameH = totalH + touchPad * 2;
+        const anchorY = (dotCenterY + touchPad) / frameH;
         // anchor (fractional) only takes effect on Android and iOS+Google Maps — react-native-maps'
         // iOS implementation for the default Apple Maps provider ignores it entirely and instead
         // honors centerOffset (in points), so both must be set to keep the dot's true center, not
-        // the container's geometric center, pinned to the coordinate on every platform/provider
+        // the container's geometric center, pinned to the coordinate on every platform/provider.
+        // symmetric padding leaves the dot's offset from the frame centre unchanged, so this value
+        // is the same with or without the touch padding
         const centerOffsetY = dotCenterY - totalH / 2;
 
         return (
             <Marker ref={markerRef}
-                title={label}
+                // no title/description/Callout child: on iOS, AIRMapMarker.shouldShowCalloutView()
+                // shows the native callout whenever any of those are set, popping it on every tap
+                // before onPress can suppress it — omitting them keeps onPress the only interaction
                 anchor={{ x: 0.5, y: anchorY }}
                 centerOffset={{ x: 0, y: centerOffsetY }}
                 tracksViewChanges={true}
                 coordinate={{ latitude: lat, longitude: lng }}
-                onCalloutPress={() => markerRef.current?.hideCallout()}
-                onPress={() => {
-                    markerRef.current?.hideCallout();
-                    onPress?.();
-                }}
+                onPress={() => onPress?.()}
             >
-                <View testID="user-map-marker" style={{ flexDirection: 'column', alignItems: 'center', gap: 0, height: totalH, width: labelWidth }}>
-                    {/* dot + triangle drawn as a single SVG so paint order (triangle first, dot on top)
-                        is guaranteed on both iOS and Android — view-tree z-order is unreliable inside a map marker */}
-                    <View style={{ width: 38, height: 40, justifyContent: 'center', alignItems: 'center' }}>
-                        {/* alert replaces the standard dot entirely rather than overlaying it */}
-                        {!showAlert && (
-                            <Svg width={38} height={40}>
-                                {showTriangle && (
-                                    <Polygon
-                                        points="19,0 0,38 38,38"
-                                        fill="#000"
-                                        stroke="#fff"
-                                        strokeWidth={1}
-                                        strokeLinejoin="round"
-                                    />
-                                )}
-                                {/* dot — drawn after the triangle so it sits on top; own fill for the dot colour */}
-                                <Circle cx={19} cy={26} r={11} fill={color} stroke="#fff" strokeWidth={2.5} />
-                            </Svg>
-                        )}
-                        {showAlert && (
-                            // centered on the same anchor point (19,26) as the dot, sized bigger; the whole
-                            // badge (red triangle + white border + mark) pulsates with a slight scale change
-                            <Animated.View
-                                style={{
-                                    position: 'absolute', left: -3, top: 4,
-                                    width: 44, height: 44,
-                                    transform: [{ scale: pulseScale }],
-                                }}
-                            >
-                                <Svg width={44} height={44} viewBox="0 0 24 24">
-                                    <Path
-                                        d="M12 2 L23 22 L1 22 Z"
-                                        fill="#ef4444"
-                                        stroke="#ffffff"
-                                        strokeWidth={2}
-                                        strokeLinejoin="round"
-                                        strokeLinecap="round"
-                                    />
-                                    <SvgText x={12} y={18} textAnchor="middle" fill="#ffffff" fontSize={12} fontWeight="bold">!</SvgText>
+                {/* transparent frame padding the content by touchPad on every side — invisible, but
+                    part of the marker's tap target, which is what makes the small dot easy to hit */}
+                <View testID="user-map-marker" style={{ height: frameH, width: frameW, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ flexDirection: 'column', alignItems: 'center', gap: 0, height: totalH, width: labelWidth }}>
+                        {/* dot + triangle drawn as a single SVG so paint order (triangle first, dot on top)
+                            is guaranteed on both iOS and Android — view-tree z-order is unreliable inside a map marker */}
+                        <View style={{ width: 38, height: 40, justifyContent: 'center', alignItems: 'center' }}>
+                            {/* alert replaces the standard dot entirely rather than overlaying it */}
+                            {!showAlert && (
+                                <Svg width={38} height={40}>
+                                    {showTriangle && (
+                                        <Polygon
+                                            points="19,0 0,38 38,38"
+                                            fill="#000"
+                                            stroke="#fff"
+                                            strokeWidth={1}
+                                            strokeLinejoin="round"
+                                        />
+                                    )}
+                                    {/* dot — drawn after the triangle so it sits on top; own fill for the dot colour */}
+                                    <Circle cx={19} cy={26} r={11} fill={color} stroke="#fff" strokeWidth={2.5} />
                                 </Svg>
-                            </Animated.View>
-                        )}
-                    </View>
-                    <View
-                        style={{
-                            position: 'absolute', top: 40, alignSelf: 'center',
-                            opacity: showLabel ? 1 : 0,
-                            backgroundColor: color,
-                            paddingHorizontal: 10, paddingVertical: 2,
-                            borderRadius: 20, borderWidth: 2.5, borderColor: '#fff',
-                        }}>
-                        <Text numberOfLines={1} style={{ color: labelColor ?? 'white', fontSize: 10 }}>
-                            {label}
-                        </Text>
+                            )}
+                            {showAlert && (
+                                // centered on the same anchor point (19,26) as the dot, sized bigger; the whole
+                                // badge (red triangle + white border + mark) pulsates with a slight scale change
+                                <Animated.View
+                                    style={{
+                                        position: 'absolute', left: -3, top: 4,
+                                        width: 44, height: 44,
+                                        transform: [{ scale: pulseScale }],
+                                    }}
+                                >
+                                    <Svg width={44} height={44} viewBox="0 0 24 24">
+                                        <Path
+                                            d="M12 2 L23 22 L1 22 Z"
+                                            fill="#ef4444"
+                                            stroke="#ffffff"
+                                            strokeWidth={2}
+                                            strokeLinejoin="round"
+                                            strokeLinecap="round"
+                                        />
+                                        <SvgText x={12} y={18} textAnchor="middle" fill="#ffffff" fontSize={12} fontWeight="bold">!</SvgText>
+                                    </Svg>
+                                </Animated.View>
+                            )}
+                        </View>
+                        <View
+                            style={{
+                                position: 'absolute', top: 40, alignSelf: 'center',
+                                opacity: showLabel ? 1 : 0,
+                                backgroundColor: color,
+                                paddingHorizontal: 10, paddingVertical: 2,
+                                borderRadius: 20, borderWidth: 2.5, borderColor: '#fff',
+                            }}>
+                            <Text numberOfLines={1} style={{ color: labelColor ?? 'white', fontSize: 10 }}>
+                                {label}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             </Marker>

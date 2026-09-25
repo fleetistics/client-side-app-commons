@@ -92,6 +92,7 @@ export function LocationProvider(props: { children: React.ReactNode, setIsLocati
                 stationaryRadius: 25,
                 stopTimeout: 30,
                 locationAuthorizationRequest: 'Always',
+                disableLocationAuthorizationAlert: true
             },
             // Logger Config
             logger: {
