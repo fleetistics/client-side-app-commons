@@ -30,14 +30,16 @@ export class TeamContextService {
     /**
      * @param teamId
      * @param latestUpdateDate
-     * @param notActiveTeamUserIds
+     * @param notTeamUserIds
+     * @param requestedUserIds
      * @returns TeamContextDelta OK
      * @throws ApiError
      */
     public static getApiTeamContextDelta(
         teamId: number,
         latestUpdateDate?: number,
-        notActiveTeamUserIds?: Array<number>,
+        notTeamUserIds?: Array<number>,
+        requestedUserIds?: Array<number>,
     ): CancelablePromise<TeamContextDelta> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -47,7 +49,8 @@ export class TeamContextService {
             },
             query: {
                 'latestUpdateDate': latestUpdateDate,
-                'notActiveTeamUserIds': notActiveTeamUserIds,
+                'notTeamUserIds': notTeamUserIds,
+                'requestedUserIds': requestedUserIds,
             },
             errors: {
                 400: `Bad Request`,

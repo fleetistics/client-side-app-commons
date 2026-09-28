@@ -36,6 +36,8 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         res.header = true;
     }
     context.UnknownUserIds = new Set<number>();
+    context.NotTeamUserIds = new Set<number>();
+
     if (!context.Users) context.Users = new Map<number, UserDto>();
     let updateMapStates_byMembers = new Set<number>();
     let updateMapStates_byUsers = new Set<number>();
@@ -52,7 +54,7 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         delta.Users?.forEach((user) => {
             context.Users?.set(user.Id!, user);
             updateMapStates_byUsers.add(user.Id!);
-            context.UnknownUserIds?.delete(user.Id!);
+            //context.UnknownUserIds?.delete(user.Id!);
         });
         res.users = true;
     }
@@ -72,7 +74,7 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
                 updateMapStates_byAlerts.add(state.UserId!);
                 updateMapStates_byPrimaryTarget.add(state.UserId!);
             }
-            if (!context.Users?.get(state.UserId!)) context.UnknownUserIds?.add(state.UserId!);
+            //if (!context.Users?.get(state.UserId!)) context.UnknownUserIds?.add(state.UserId!);
             tmpMapStates.LatestOnMapUpdate = state.LatestOnMapUpdate!;
             tmpMapStates.Latitude = state.Latitude!;
             tmpMapStates.Longitude = state.Longitude!;
@@ -131,13 +133,7 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         delta.UserAlerts.forEach((alert) => {
             if (!context.UserAlerts) context.UserAlerts = new Map<number, ActiveUserEmergencyAlertDto>();
             context.UserAlerts.set(alert.UserId!, alert);
-            if (!context.Users?.get(alert.UserId!)) context.UnknownUserIds?.add(alert.UserId!);
             updateMapStates_byAlerts.add(alert.UserId!);
-            let tmpMapStates = context.MapStates!.filter(e => e.UserId == alert.UserId);
-            if (tmpMapStates?.length) {
-                tmpMapStates.forEach(e => e.HasAlert = true);
-                res.mapItems = true;
-            }
         });
     }
     if (updateMapStates_byAlerts.size) {
@@ -163,18 +159,13 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         context.TeamPrimaryTargetUser = delta.TeamPrimaryTargetUser;
         updateMapStates_byPrimaryTarget.add(delta.TeamPrimaryTargetUser.TargetUserId!);
         if (!context.Users?.get(delta.TeamPrimaryTargetUser.TargetUserId!)) context.UnknownUserIds?.add(delta.TeamPrimaryTargetUser.TargetUserId!);
-        let tmpMapStates = context.MapStates!.filter(e => e.HasFocus);
-        if (tmpMapStates?.length) {
-            tmpMapStates.forEach(e => e.HasFocus = false);
-            res.mapItems = true;
-        }
     }
 
     if (updateMapStates_byPrimaryTarget.size) {
         updateMapStates_byPrimaryTarget.forEach((targetUserId) => {
             let tmpMapStates = context.MapStates!.filter(e => e.UserId == targetUserId);
             if (tmpMapStates?.length) {
-                tmpMapStates.forEach(e => e.HasFocus = true);
+                tmpMapStates.forEach(e => e.HasFocus = (context.TeamPrimaryTargetUser?.TargetUserId == targetUserId));
                 res.mapItems = true;
             }
         });
@@ -184,6 +175,10 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         delta.RemoveMemberUserIds?.forEach((id) => {
             updateMapStates_byMembers.delete(id);
             context.Members?.delete(id);
+            context.UserAlerts?.delete(id);
+            context.MobileGpsDevices?.delete(id);
+            if (context.TeamPrimaryTargetUser?.TargetUserId == id)
+                context.TeamPrimaryTargetUser = undefined;
 
             while (context.MapStates) {
                 let tmpIndex = context.MapStates.findIndex(e => e.UserId == id);
@@ -202,7 +197,7 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         delta.Members?.forEach((member) => {
             context.Members?.set(member.UserId!, member);
             updateMapStates_byMembers.add(member.UserId!);
-            if (!context.Users?.get(member.UserId!)) context.UnknownUserIds?.add(member.UserId!);
+            //if (!context.Users?.get(member.UserId!)) context.UnknownUserIds?.add(member.UserId!);
         });
         res.members = true;
     }
@@ -286,6 +281,21 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
             context.UnreadMessagesCount += context.TeamActivities.filter(e => !e.UserReadStatusId).length;
         }
     }
+    if (context.TeamPrimaryTargetUser && (!context.Members || !context.Members.get(context.TeamPrimaryTargetUser.TargetUserId!))) {
+        context.NotTeamUserIds?.add(context.TeamPrimaryTargetUser.TargetUserId!);
+    }
+    if ( context.UserMessages?.length) {
+        context.UserMessages.forEach((message) => {
+            if (!context.Members || !context.Members.get(message.UserId!)) context.NotTeamUserIds?.add(message.UserId!);
+        });
+    }
+    if ( context.UserMessages?.length) {
+        context.UserMessages.forEach((message) => {
+            if (!context.Members || !context.Members.get(message.UserId!)) context.NotTeamUserIds?.add(message.UserId!);
+            if (message.ToUserId && (!context.Members || !context.Members.get(message.ToUserId!))) context.NotTeamUserIds?.add(message.ToUserId!);
+        });
+    }
+    
     context.LastCheckForUpdate = delta.LastUpdate!;
     if (res.users) {
         res.messages = true;

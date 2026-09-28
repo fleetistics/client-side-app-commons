@@ -48,6 +48,7 @@ export type TeamContext = {
     MapStates?: TeamMapItem[];
 
     UnknownUserIds?: Set<number>;
+    NotTeamUserIds?: Set<number>;
 };
 
 export type TeamHeaderContext = {

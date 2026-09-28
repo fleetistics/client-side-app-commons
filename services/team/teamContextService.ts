@@ -143,7 +143,7 @@ export class TeamContextService {
     }
     console.log(`TeamContextService::startTeam switching from [${this.mCurrentTeamId}] to [${teamId}]`);
     this.stopPolling();
-    //this.mCurrentTeamId = teamId;
+    this.mCurrentTeamId = teamId;
     //this.resetState();
     void this.loadFull(teamId);
   }
@@ -215,8 +215,17 @@ export class TeamContextService {
     const teamId = this.mCurrentTeamId;
     if (teamId === undefined) return;
     const since = this.mContext.LastCheckForUpdate;
-    let url = `${APP_URLS.BASE_TEAM_URL}/${teamId}/context/delta?latestUpdateDate=${since}`;
-    if (this.mContext.UnknownUserIds?.size) url += `&requestedUserIds=${Array.from(this.mContext.UnknownUserIds.values()).join(',')}`;
+    // notTeamUserIds/requestedUserIds are JSON-encoded into a single query value each (matching
+    // the server's tryParseIdArray) rather than relying on native query-array binding (repeated
+    // keys), and built via URLSearchParams so the JSON's brackets/commas get percent-encoded.
+    const params = new URLSearchParams({ latestUpdateDate: String(since) });
+    if (this.mContext.UnknownUserIds?.size) {
+      params.set('requestedUserIds', JSON.stringify(Array.from(this.mContext.UnknownUserIds)));
+    }
+    if (this.mContext.NotTeamUserIds?.size) {
+      params.set('notTeamUserIds', JSON.stringify(Array.from(this.mContext.NotTeamUserIds)));
+    }
+    const url = `${APP_URLS.BASE_TEAM_URL}/${teamId}/context/delta?${params.toString()}`;
     const result = await this.request(url);
     if (teamId !== this.mCurrentTeamId) return; // team switched again while this was in flight
 
