@@ -149,7 +149,7 @@ export class TeamContextService {
   }
 
   private createEmptyTeamContext(): void {
-    this.mContext = { LastHeaderUpdate: 0, LastMembersUpdate: 0, LastMessagesUpdate: 0, LastMapItemsUpdate : 0 } as TeamContext;
+    this.mContext = { LastCheckForUpdate: 0, LastHeaderUpdate: 0, LastMembersUpdate: 0, LastMessagesUpdate: 0, UnreadMessagesCount: 0 } as TeamContext;
     this.mHeaderSnapshot = buildHeaderSnapshot(this.mContext);
     this.mMembersSnapshot = buildMembersSnapshot(this.mContext);
     this.mMessagesSnapshot = buildMessagesSnapshot(this.mContext);

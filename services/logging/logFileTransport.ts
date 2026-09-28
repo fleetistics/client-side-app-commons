@@ -32,6 +32,15 @@ let state: RotationState | null = null;
 let writeQueue: Promise<void> = Promise.resolve();
 let dirReady: Promise<void> | null = null;
 
+// The console as it was before initLogger's patchConsole, captured at module load (which
+// logger.ts's import guarantees happens first). Write failures must be reported through
+// this, never the global console: patchConsole routes that back into this transport, so a
+// failing write would log a failure that fails to write, forever, without ever yielding.
+const unpatchedWarn = console.warn.bind(console);
+// Report only the first failure of a run, so a persistently failing disk doesn't emit a
+// warning for every log line. Reset by the next successful write.
+let lastWriteFailed = false;
+
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
 const todayKey = (): string => {
@@ -44,7 +53,13 @@ const fileName = (day: string, seq: number): string => `app-log-${day}-${pad2(se
 const ensureLogDir = (): Promise<void> => {
   dirReady ??= ReactNativeBlobUtil.fs
     .exists(LOG_FILES_DIR)
-    .then((exists) => (exists ? undefined : ReactNativeBlobUtil.fs.mkdir(LOG_FILES_DIR)));
+    .then((exists) => (exists ? undefined : ReactNativeBlobUtil.fs.mkdir(LOG_FILES_DIR)))
+    .catch((err) => {
+      // Only cache success: a cached rejection would fail every later write for the rest
+      // of the session, even once the cause (e.g. storage not yet available) has cleared.
+      dirReady = null;
+      throw err;
+    });
   return dirReady;
 };
 
@@ -134,7 +149,13 @@ export const blobUtilFileTransport: transportFunctionType<object> = (props) => {
   // line.length is UTF-16 code units, not bytes, so the size cap is approximate for
   // non-ASCII text — acceptable for a soft rotation threshold.
   const line = `${new Date().toISOString()} [${props.level.text.toUpperCase()}] ${props.msg}\n`;
-  writeQueue = writeQueue.then(() => appendLine(line)).catch((err) => {
-    console.warn('blobUtilFileTransport: failed to write log line', err);
-  });
+  writeQueue = writeQueue.then(() => appendLine(line)).then(
+    () => {
+      lastWriteFailed = false;
+    },
+    (err) => {
+      if (!lastWriteFailed) unpatchedWarn('blobUtilFileTransport: failed to write log line', err);
+      lastWriteFailed = true;
+    },
+  );
 };

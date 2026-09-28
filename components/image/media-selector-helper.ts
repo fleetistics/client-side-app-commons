@@ -3,7 +3,8 @@ import ImagePicker, { ImageOrVideo, Image as PickerImage } from "react-native-im
 import { v4 as uuidv4 } from "uuid";
 
 import { openSettings, PERMISSIONS, request, requestMultiple, RESULTS } from "react-native-permissions";
-import { MediaType, EditorUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
+import { EditorUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
+import { MediaType } from "@/client-side.Commons/dataLayer/model/uploaded-media-const";
 import { APP_CONFIG } from "@/app.Impl/configs/app-config";
 import { MediaUploadService } from "@/app.Commons/services/media-uploader/mediaUploadService";
 
