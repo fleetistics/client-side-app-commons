@@ -12,6 +12,7 @@ import type { TeamMemberUserDto } from './TeamMemberUserDto';
 import type { TeamPrimaryTargetUserDto } from './TeamPrimaryTargetUserDto';
 import type { UploadedMediaDto } from './UploadedMediaDto';
 import type { UserDto } from './UserDto';
+import type { UserLocationPrivacyDto } from './UserLocationPrivacyDto';
 import type { UserMessageDto } from './UserMessageDto';
 export type TeamContextDelta = {
     /**
@@ -28,6 +29,8 @@ export type TeamContextDelta = {
     DoRemoveTeamPrimaryTargetUser?: boolean;
     Users?: Array<UserDto>;
     RemoveUserIds?: Array<number>;
+    UserLocationPrivacies?: Array<UserLocationPrivacyDto>;
+    RemoveUserLocationPrivacyIds?: Array<number>;
     MobileGpsDevices?: Array<MobileGpsDeviceDto>;
     RemoveMobileGpsDeviceIds?: Array<number>;
     UserAlerts?: Array<ActiveUserEmergencyAlertDto>;
@@ -36,5 +39,6 @@ export type TeamContextDelta = {
     RemoveUserMessageIds?: Array<number>;
     TeamActivities?: Array<TeamActivityDto>;
     GpsDeviceMapStates?: Array<MobileGpsDeviceMapStateDto>;
+    RemoveGpsDeviceMapStateIds?: Array<number>;
 };
 
