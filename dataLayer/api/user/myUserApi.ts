@@ -1,4 +1,10 @@
+import { useCallback } from 'react';
+import { useSelector, useStore } from 'react-redux';
 import { apiSlice } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { registerOfflineMutation } from '@/client-side.Commons/dataLayer/outbox/offlineMutation';
+import { getOutbox } from '@/client-side.Commons/dataLayer/outbox/outbox';
+import { selectLatestPendingArgs } from '@/client-side.Commons/dataLayer/outbox/outboxSlice';
+import { useLatestPendingArgs, useOfflineMutation, useOutboxStatus } from '@/client-side.Commons/dataLayer/outbox/outboxHooks';
 import { LocationService } from '@/app.Commons/services/location/locationService';
 
 import type { User, UserPatch, UserLocationPrivacyDto, UserLocationPrivacyPatch } from '../../model/user/userDto';
@@ -98,6 +104,38 @@ export const {
   useLoadActiveTeamIdMutation,
 } = userApi;
 
+/** Outbox entity key (and tag) for the current user's location-privacy record. */
+export const PRIVACY_ENTITY_KEY = 'UserLocationPrivacy:ME';
+
+// Location privacy is offline-first: the switch takes effect on this device at once
+// (LocationService stops/starts reporting locally) and the PATCH is queued until the server
+// is reachable. The PATCH sets an absolute value, so replaying it is harmless and only the
+// latest queued value matters (coalesce: 'replace').
+registerOfflineMutation(userApi.endpoints.patchUserLocationPrivacy, {
+  entityKeys: () => [PRIVACY_ENTITY_KEY],
+  coalesce: 'replace',
+  optimistic: ({ PrivacyMode }) => [
+    {
+      endpointName: 'getUserLocationPrivacy',
+      queryArgs: undefined,
+      apply: (draft: UserLocationPrivacyDto | null) => {
+        if (!draft) return { PrivacyMode, LatestUpdate: Math.floor(Date.now() / 1000) };
+        draft.PrivacyMode = PrivacyMode;
+      },
+    },
+  ],
+  // The server refused the change for good: LocationService was already switched locally,
+  // so bring it back in line with whatever the cache now holds (the server's value, with
+  // any newer still-pending choice re-applied on top by the outbox).
+  onPermanentFailure: async (_args, dispatch) => {
+    await dispatch(userApi.endpoints.getUserLocationPrivacy.initiate(undefined, { forceRefetch: true, subscribe: false }));
+    dispatch((_: unknown, getState: () => any) => {
+      const cached = userApi.endpoints.getUserLocationPrivacy.select()(getState()).data;
+      LocationService.SetPrivateMode(((cached?.PrivacyMode) ?? 0) > 0);
+    });
+  },
+});
+
 
 
 /** Alias for the RTK-generated `useGetMyUserQuery`. */
@@ -129,14 +167,57 @@ export const useLoadUserLocationPrivacy = useLoadUserLocationPrivacyMutation;
 /** Alias for the RTK-generated `usePatchUserLocationPrivacyMutation`. */
 export const usePatchUserLocationPrivacy = usePatchUserLocationPrivacyMutation;
 
-/** Mutator counterpart to useGetUserPrivacyMode: PATCHes PrivacyMode from a single boolean. */
+/**
+ * Mutator counterpart to useGetUserPrivacyMode, offline-first: applies the mode on this device
+ * immediately and queues the PATCH (see registerOfflineMutation above). The returned status
+ * says whether the server has it yet (isPending), is receiving it (isSending), or refused it (failed).
+ *
+ * For a toggle button use togglePrivacyMode, not switchPrivacyMode(!valueFromRender): it reads
+ * the current mode from the store at call time, so taps faster than a re-render still alternate.
+ */
 export function useSwitchUserPrivacyMode() {
-  const [patch, result] = usePatchUserLocationPrivacyMutation();
-  const switchPrivacyMode = (isPrivate: boolean) => {
-    LocationService.SetPrivateMode(isPrivate);
-    return patch({ PrivacyMode: isPrivate ? 1 : 0 });
-  };
-  return [switchPrivacyMode, result] as const;
+  const store = useStore();
+  const enqueue = useOfflineMutation(userApi.endpoints.patchUserLocationPrivacy);
+  const status = useOutboxStatus(PRIVACY_ENTITY_KEY);
+  const switchPrivacyMode = useCallback(
+    (isPrivate: boolean) => {
+      LocationService.SetPrivateMode(isPrivate);
+      return enqueue({ PrivacyMode: isPrivate ? 1 : 0 });
+    },
+    [enqueue]
+  );
+  const togglePrivacyMode = useCallback(
+    () => switchPrivacyMode(!selectCurrentPrivacyMode(store.getState(), getOutbox(store).currentUserId)),
+    [store, switchPrivacyMode]
+  );
+  return [switchPrivacyMode, status, togglePrivacyMode] as const;
+}
+
+/**
+ * The mode the user sees right now: the cache (server value with queued changes applied, and
+ * enqueue applies a change there synchronously), else the latest queued value if the cache
+ * isn't loaded, else not private.
+ */
+function selectCurrentPrivacyMode(state: any, userId: number | undefined): boolean {
+  const cached = userApi.endpoints.getUserLocationPrivacy.select()(state).data;
+  if (cached !== undefined) return ((cached?.PrivacyMode) ?? 0) > 0;
+  const pending = selectLatestPendingArgs<UserLocationPrivacyPatch>(state, userApi.endpoints.patchUserLocationPrivacy.name, userId);
+  return ((pending?.PrivacyMode) ?? 0) > 0;
+}
+
+/** The privacy mode the user chose that the server hasn't confirmed yet, or undefined. */
+export function usePendingPrivacyMode(): boolean | undefined {
+  const pending = useLatestPendingArgs(userApi.endpoints.patchUserLocationPrivacy);
+  return pending ? pending.PrivacyMode > 0 : undefined;
+}
+
+/**
+ * The privacy mode currently in getUserLocationPrivacy's cache (server value with any pending
+ * change applied), without subscribing - so it never triggers a fetch. Undefined if not loaded.
+ */
+export function useCachedPrivacyMode(): boolean | undefined {
+  const cached = useSelector(userApi.endpoints.getUserLocationPrivacy.select()).data;
+  return cached === undefined ? undefined : ((cached?.PrivacyMode) ?? 0) > 0;
 }
 
 /** Alias for the RTK-generated `useLoadActiveTeamIdMutation` — call its trigger once (e.g. on mount) to load the value a single time. */
