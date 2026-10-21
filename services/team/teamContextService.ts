@@ -19,7 +19,7 @@ import type {
   TeamMessagesContext,
 } from '@/app.Commons/services/team/team-context';
 
-import { TeamContextDelta } from '@/app.Commons/dataLayer/open-api';
+import { TeamContextDelta } from '@/client-side.Commons/dataLayer/open-api';
 import { applyTeamContextDelta } from './team-context-updater';
 
 type ChangeListener = () => void;
@@ -200,9 +200,10 @@ export class TeamContextService {
 
   private async loadFull(teamId:number): Promise<void> {
     const result = await this.request(`${APP_URLS.BASE_TEAM_URL}/${teamId}/context`);
+    console.log(`TeamContextService::loadFull [${result.status}]`, result.body);
     if (result.status === 200 && result.body) {
       this.createEmptyTeamContext();
-      this.applyDelta(result.body as TeamContextDelta);
+      this.applyDelta(result.body as TeamContextDelta, true);
       if (GetIsAppActive()) this.startPolling();
     }
     else {
@@ -212,8 +213,25 @@ export class TeamContextService {
   }
 
   private async pollDelta(): Promise<void> {
+    console.log(`TeamContextService::pollDelta teamId [${this.mCurrentTeamId}] mPollInFlightTeamId [${this.mPollInFlightTeamId}]`);
     const teamId = this.mCurrentTeamId;
     if (teamId === undefined) return;
+    // A previous poll for this team is still running (slow network) - skip this tick; the next
+    // one picks up from LastCheckForUpdate. Keyed by team so a switch isn't blocked by the old
+    // team's request, and request() is time-limited so this can't stay set forever.
+    if (this.mPollInFlightTeamId === teamId) return;
+    this.mPollInFlightTeamId = teamId;
+    try {
+      await this.doPollDelta(teamId);
+    } finally {
+      if (this.mPollInFlightTeamId === teamId) this.mPollInFlightTeamId = undefined;
+    }
+  }
+
+  private async doPollDelta(teamId: number): Promise<void> {
+    // LastCheckForUpdate is the server's TeamContextDelta.LastUpdate: unix MILLISECONDS, rounded
+    // down. It is an opaque cursor - send it back exactly as received, never convert or round it
+    // (a cursor ahead of the server's clock makes the server skip just-committed rows forever).
     const since = this.mContext.LastCheckForUpdate;
     // notTeamUserIds/requestedUserIds are JSON-encoded into a single query value each (matching
     // the server's tryParseIdArray) rather than relying on native query-array binding (repeated
@@ -227,6 +245,7 @@ export class TeamContextService {
     }
     const url = `${APP_URLS.BASE_TEAM_URL}/${teamId}/context/delta?${params.toString()}`;
     const result = await this.request(url);
+    console.log(`TeamContextService::doPollDelta ${(teamId !== this.mCurrentTeamId)} result [${result.status}]`, result.body);
     if (teamId !== this.mCurrentTeamId) return; // team switched again while this was in flight
 
     if (result.status === 410 || result.status === 403) {
@@ -239,28 +258,40 @@ export class TeamContextService {
     // 204 = nothing changed since `since` - nothing to apply.
   }
 
-  private applyDelta(delta: TeamContextDelta): void {
+  /** `forceNotify` (used after a full load) rebuilds and notifies every group, even ones the
+   * delta didn't touch - a new team's empty group (e.g. no messages) must still replace the
+   * previous team's snapshot for subscribers. */
+  private applyDelta(delta: TeamContextDelta, forceNotify = false): void {
+    console.log(`TeamContextService::applyDelta `, delta);
     const changed = applyTeamContextDelta(this.mContext, delta);
-    if (changed.header) {
+    console.log(`TeamContextService::applyDelta changed`, changed);
+    if (forceNotify || changed.header) {
       this.mHeaderSnapshot = buildHeaderSnapshot(this.mContext);
       this.notify('header');
     }
-    if (changed.members) {
+    if (forceNotify || changed.members) {
       this.mMembersSnapshot = buildMembersSnapshot(this.mContext);
       this.notify('members');
     }
-    if (changed.mapItems) {
+    if (forceNotify || changed.mapItems) {
       this.mMapItemsSnapshot =  buildMapItemsSnapshot(this.mContext);
       this.notify('mapItems');
     }
-    if (changed.messages) {
+    if (forceNotify || changed.messages) {
       this.mMessagesSnapshot = buildMessagesSnapshot(this.mContext);
       this.notify('messages');
     }
   }
 
   private async request(url: string): Promise<{ status: number; body?: unknown }> {
-    const attempt = () => fetch(url, { headers: { Authorization: `Bearer ${AuthToken.get() ?? ''}` } });
+    // One abort timer for the whole request (incl. a 401 refresh + retry and reading the body),
+    // so a hung connection can't leave a poll pending indefinitely.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), APP_CONFIG.TeamContextUpdatePeriodMs * 2);
+    const attempt = () => fetch(url, {
+      headers: { Authorization: `Bearer ${AuthToken.get() ?? ''}` },
+      signal: controller.signal,
+    });
     try {
       let response = await attempt();
       if (response.status === 401) {
@@ -281,8 +312,10 @@ export class TeamContextService {
       const body = await response.json();
       return { status: response.status, body };
     } catch (err) {
-      console.error(`TeamContextService::request [${url}] failed`, err);
+      console.error(`TeamContextService::request [${url}] ${controller.signal.aborted ? 'timed out' : 'failed'}`, err);
       return { status: 0 };
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -296,6 +329,7 @@ export class TeamContextService {
   }
 
   private mCurrentTeamId?: number;
+  private mPollInFlightTeamId?: number;
   private mContext:TeamContext = {} as TeamContext;
   private mHeaderSnapshot: TeamHeaderContext = buildHeaderSnapshot(this.mContext);
   private mMembersSnapshot: TeamMembersContext = buildMembersSnapshot(this.mContext);

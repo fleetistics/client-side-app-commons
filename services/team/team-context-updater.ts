@@ -1,7 +1,7 @@
 
 import type { TeamContext, TeamMapItem } from '@/app.Commons/services/team/team-context';
-import { TeamMapIcon, TeamUserRole } from '@/app.Commons/dataLayer/model/team/team-const';
-import { ActiveUserEmergencyAlertDto, MobileGpsDeviceDto, TeamContextDelta, TeamMemberUserDto, UserDto } from '@/app.Commons/dataLayer/open-api';
+import { TeamMapIcon, TeamUserRole } from '@/client-side.Commons/dataLayer/model/team/team-const';
+import { ActiveUserEmergencyAlertDto, MobileGpsDeviceDto, TeamContextDelta, TeamMemberUserDto, UserDto } from '@/client-side.Commons/dataLayer/open-api';
 
 export type TeamContextChangeFlags = {
 
@@ -82,7 +82,15 @@ export function applyTeamContextDelta(context: TeamContext, delta: TeamContextDe
         });
         res.mapItems = true;
     }
-
+if (delta.RemoveGpsDeviceMapStateIds?.length) {
+    delta.RemoveGpsDeviceMapStateIds?.forEach((id) => {
+        let tmpIdx = context.MapStates!.findIndex(e => e.UserId  == id);
+        if (tmpIdx >= 0) {
+            context.MapStates?.splice(tmpIdx, 1);
+            res.mapItems = true;
+        }
+    });
+}
 
 
     if (delta.RemoveMobileGpsDeviceIds?.length) {

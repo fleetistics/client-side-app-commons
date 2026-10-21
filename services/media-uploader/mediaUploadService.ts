@@ -8,8 +8,8 @@ import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessTok
 import { APP_URLS } from "@/app.Impl/configs/app-urls";
 
 
-export function StartMediaUpload(patch: any) {
-    if (patch.InsertMedias && Array.isArray(patch.InsertMedias)) {
+export function StartMediaUpload(patch?: any) {
+    if (patch?.InsertMedias && Array.isArray(patch.InsertMedias)) {
         MediaUploadService.Enqueue(patch.InsertMedias);
     }
 }

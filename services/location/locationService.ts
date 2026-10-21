@@ -2,7 +2,6 @@ import BackgroundGeolocation from 'react-native-background-geolocation';
 import type { Location, ProviderChangeEvent } from '@transistorsoft/background-geolocation-types';
 import { AccuracyAuthorization, AuthorizationStatus } from '@transistorsoft/background-geolocation-types';
 import { APP_CONFIG } from '@/app.Impl/configs/app-config';
-import { APP_URLS } from '@/app.Impl/configs/app-urls';
 import { store } from '@/client-side.Commons/dataLayer/core/store';
 import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/api/other/locationApi';
 import { GPSLocation, GPSLocationAccuracy } from '@/client-side.Commons/dataLayer/model/gps-location';
@@ -105,6 +104,15 @@ export class LocationService {
             TimeStamp:timeStamp??Math.floor( new Date(position.timestamp).getTime() / 1000)
         };
     }
+    /**
+     * The latest location without waiting when reporting is on (the plugin keeps mLatestLocation
+     * fresh); when reporting is off the plugin is stopped, so ask the phone for a fix and wait.
+     */
+    public async GetSmartLatestGPSLocation(): Promise<GPSLocation> {
+        if (this.mIsLocationReported) return this.mLatestLocation;
+        return await this.GetCurrentLocationAsync();
+    }
+
     public async GetCurrentLocationAsync(): Promise<GPSLocation> {
         try {
             var location = await BackgroundGeolocation.getCurrentPosition({
@@ -112,6 +120,7 @@ export class LocationService {
                 maximumAge: 5000,     // Accept the last-known-location if not older than 5000 ms.
                 desiredAccuracy: 20,  // Try to fetch a location with an accuracy of 20 meters.
                 samples: 3,           // How many location samples to attempt.
+                persist: this.mIsLocationReported, // Not reporting: don't queue the fix, or it would be uploaded later.
             });
             if ( this.CheckAndUpdateLocation(location)) return this.mLatestLocation;
             else return this.locationToGPSLocation(location);
@@ -131,10 +140,10 @@ export class LocationService {
         if ((!loc.coords.accuracy || loc.coords.accuracy < 60) && (loc.coords.latitude && loc.coords.longitude)) {
             let tmpTimeStamp = Math.floor( new Date(loc.timestamp).getTime() / 1000);
             //if (this.mLatestLocation ) console.log(`LocationService::CheckAndUpdateLocation(tmpTimeStamp-this.mLatestLocation.TimeStamp) ${(tmpTimeStamp-this.mLatestLocation.TimeStamp!)} ${Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude)} ${Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude)}`);
-            if (this.mLatestLocation.TimeStamp === -1 || ((this.mLatestLocation.TimeStamp && (tmpTimeStamp-this.mLatestLocation.TimeStamp) > 30 ) && (Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude) > 0.0003 || Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude) > 0.0003))) {
+            if (this.mLatestLocation.TimeStamp === -1 || ((this.mLatestLocation.TimeStamp && (tmpTimeStamp-this.mLatestLocation.TimeStamp) > 2 ) && (Math.abs(this.mLatestLocation.Lat! - loc.coords.latitude) > 0.00001 || Math.abs(this.mLatestLocation.Lng! - loc.coords.longitude) > 0.00001))) {
                 
                 this.mLatestLocation = this.locationToGPSLocation(loc, tmpTimeStamp);
-                console.log(`LocationService::CheckAndUpdateLocation update was dispatched ${tmpTimeStamp}`,this.mLatestLocation);
+                //console.log(`LocationService::CheckAndUpdateLocation update was dispatched ${tmpTimeStamp}`,this.mLatestLocation);
                 store.dispatch(locationAcquired(this.mLatestLocation));
 
                 return true;
@@ -200,14 +209,12 @@ export class LocationService {
         console.log(`LocationService::applyReportLocationModeChange next=${next} (privateMode=${this.mPrivateMode}, reportLocationMode=${this.mReportLocationMode})`);
         try {
             if (!next) {
-                // Flush whatever is still queued while the current url/headers are valid,
-                // so nothing is left to sync later under a stale header (see onHttp handler).
-                await BackgroundGeolocation.sync();
-                await BackgroundGeolocation.setConfig({ http: { autoSync: false, url: '' } });
+                await BackgroundGeolocation.stop();
             } else {
-                await BackgroundGeolocation.setConfig({ http: { autoSync: true, url: APP_URLS.LOCATION_REPORT_URL, headers: {
+                await BackgroundGeolocation.setConfig({ http: { headers: {
                                     Authorization: `Bearer ${AuthToken.get() ?? ''}`
                                 } } });
+                await BackgroundGeolocation.start();
                 await this.GetCurrentLocationAsync();
                 console.log(`LocationService::applyReportLocationModeChange location reported: ${JSON.stringify(this.mLatestLocation)}`);
             }

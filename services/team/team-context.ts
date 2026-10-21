@@ -9,7 +9,7 @@ import type {
     TeamPrimaryTargetUserDto,
     UserMessageDto,
     TeamActivityDto,
-} from '@/app.Commons/dataLayer/open-api';
+} from '@/client-side.Commons/dataLayer/open-api';
 
 
 
