@@ -7,7 +7,7 @@ import { GlobalAlert } from '@/client-side.Commons/lib/global-alert';
 import { LocationService, LocationProviderStatus, LocationProviderStatusEnum, isLocationPermissionError } from './locationService';
 import { LOCATION_MESSAGES } from './location-messages';
 import { SubscribeIsAppActive } from '../app-state-context';
-import { APP_URLS } from '@/app.Impl/configs/app-urls';
+import { APP_URLS } from '@/client-side.Impl/config/app-urls';
 
 // iOS's start() always resolves regardless of permission outcome (the plugin's native bridge
 // never rejects it there), and even on Android a later revoke in system Settings doesn't

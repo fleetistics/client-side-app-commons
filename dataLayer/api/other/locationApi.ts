@@ -4,7 +4,7 @@ import { useAppSelector } from '@/client-side.Commons/dataLayer/core/hooks';
 import { LocationProviderStatusEnum } from '@/app.Commons/services/location/locationService';
 import type { LocationProviderPrecision } from '@/app.Commons/services/location/locationService';
 import { GPSLocation } from '@/client-side.Commons/dataLayer/model/gps-location';
-import { APP_CONFIG } from '@/app.Impl/configs/app-config';
+import { APP_CONFIG } from '@/client-side.Impl/config/app-config';
 
 // Plain, serializable snapshot of a LocationProviderStatus instance — Redux state/actions must
 // stay plain objects, so the class itself is only ever used to compute this, never stored as-is.

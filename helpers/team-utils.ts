@@ -1,4 +1,4 @@
-import { APP_CONFIG } from "@/app.Impl/configs/app-config";
+import { APP_CONFIG } from "@/client-side.Impl/config/app-config";
 
 export default class TeamUtils {
     static ParseJoinCode(value: string): string {

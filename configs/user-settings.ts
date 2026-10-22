@@ -1,11 +1,11 @@
-import { AppCommonUserSettingsEnum } from "./app-user-settings-enums";
+import { AppUserSettingsEnum } from "./user-settings-enum";
 
-export class AppCommonUserSettings {
+export class AppUserSettings {
     public static GetSettings() {
         const res = {} as any;
-        res[AppCommonUserSettingsEnum.isWeatherVisible] = true;
-        res[AppCommonUserSettingsEnum.mapType] = 'standard';
-        res[AppCommonUserSettingsEnum.mapZoomedType] = 'hybrid';
+        res[AppUserSettingsEnum.isWeatherVisible] = true;
+        res[AppUserSettingsEnum.mapType] = 'standard';
+        res[AppUserSettingsEnum.mapZoomedType] = 'hybrid';
 
 
         return res;

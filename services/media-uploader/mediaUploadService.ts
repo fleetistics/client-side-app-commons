@@ -5,7 +5,7 @@ import { GetIsAppActive, SubscribeIsAppActive } from "../app-state-context";
 import { StringUtils } from "@/client-side.Commons/helpers/string";
 import { ServerInboundUploadedMedia } from "@/client-side.Commons/dataLayer/model/uploaded-media";
 import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from "@/client-side.Commons/dataLayer/core/apiSlice";
-import { APP_URLS } from "@/app.Impl/configs/app-urls";
+import { APP_URLS } from "@/client-side.Impl/config/app-urls";
 
 
 export function StartMediaUpload(patch?: any) {

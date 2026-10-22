@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
-import { APP_CONFIG } from '@/app.Impl/configs/app-config';
-import { APP_URLS } from '@/app.Impl/configs/app-urls';
+import { APP_CONFIG } from '@/client-side.Impl/config/app-config';
+import { APP_URLS } from '@/client-side.Impl/config/app-urls';
 import {
   AuthToken,
   createStandaloneRefreshApi,

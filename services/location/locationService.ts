@@ -1,12 +1,14 @@
 import BackgroundGeolocation from 'react-native-background-geolocation';
 import type { Location, ProviderChangeEvent } from '@transistorsoft/background-geolocation-types';
 import { AccuracyAuthorization, AuthorizationStatus } from '@transistorsoft/background-geolocation-types';
-import { APP_CONFIG } from '@/app.Impl/configs/app-config';
+import { APP_CONFIG } from '@/client-side.Impl/config/app-config';
 import { store } from '@/client-side.Commons/dataLayer/core/store';
 import { locationAcquired, reportLocationStatusUpdated, providerStatusUpdated } from '@/app.Commons/dataLayer/api/other/locationApi';
 import { GPSLocation, GPSLocationAccuracy } from '@/client-side.Commons/dataLayer/model/gps-location';
 import { MathUtils } from '@/client-side.Commons/helpers/math-utils';
 import { AuthToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { SetPrivateModeChangeListener } from '@/client-side.Commons/dataLayer/api/user/myUserLocationPrivacyApi';
+import type { IPrivateModeChangeListener } from '@/client-side.Commons/lib/private-mode-change-listener';
 
 export function isLocationPermissionError(error: any): boolean {
     if (!error) return false;
@@ -82,10 +84,11 @@ export class LocationProviderStatus {
     }
 }
 
-export class LocationService {
+export class LocationService implements IPrivateModeChangeListener {
     public static GetInstance(): LocationService {
         if (!this._instance) {
             this._instance = new LocationService();
+            SetPrivateModeChangeListener(this._instance);
         }
         return this._instance;
     }
@@ -183,6 +186,10 @@ export class LocationService {
 
     public static SetReportLocationMode(value: boolean): void {
         LocationService.GetInstance().setReportLocationMode(value);
+    }
+
+    public SetPrivateMode(isPrivate: boolean): void {
+        this.setPrivateMode(isPrivate);
     }
 
     private async setBothPrivateMode_ReportLocationMode(privateMode: boolean, reportLocationMode: boolean): Promise<void> {
