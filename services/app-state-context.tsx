@@ -51,7 +51,10 @@ export function GetIsAppInited() {
     return mIsAppInited;
 }
 
-export function SubscribeIsAppActive(listener: AppStateListener) {
+export function SubscribeIsAppActive(listener: AppStateListener): () => void {
     //console.log(`AppStateContext::SubscribeIsAppActive ln: ${mIsAppActiveIListeners.length}`);
     mIsAppActiveIListeners.push(listener);
+    return () => {
+        mIsAppActiveIListeners = mIsAppActiveIListeners.filter(l => l !== listener);
+    };
 }

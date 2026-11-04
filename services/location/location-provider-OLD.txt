@@ -121,7 +121,7 @@ export function LocationProvider(props: { children: React.ReactNode, setIsLocati
                 autoSyncThreshold: 0,
                 batchSync: true,          // <-- Sync locations to server in a single HTTP request.
                 rootProperty: '.',
-                url: '',
+                url: APP_URLS.LOCATION_REPORT_URL,
                 headers: {
                     Authorization: `Bearer ${AuthToken.get() ?? ''}`,
                 },

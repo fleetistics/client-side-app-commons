@@ -1,5 +1,6 @@
 export enum AppUserSettingsEnum {
     isWeatherVisible = "isWeatherVisible",
     mapType = 'mapType',
-    mapZoomedType = 'mapZoomedType'
+    mapZoomedType = 'mapZoomedType',
+    doReportLocationWithoutCompany = "doReportLocationWithoutCompany"
 }
