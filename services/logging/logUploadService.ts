@@ -22,7 +22,8 @@ const buildLogPack = async (): Promise<LogPack | null> => {
     })
   );
 
-  const gzipBytes = gzip(sections.join('\n\n'));
+  const header = `----- platform: ${ClientSideInfoProvider.GetInstance().GetPlatformDescription()} -----`;
+  const gzipBytes = gzip([header, ...sections].join('\n\n'));
   const fileName = `client-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.log.gz`;
   return { fileName, gzipBytes };
 };
