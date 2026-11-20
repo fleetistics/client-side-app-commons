@@ -1,9 +1,11 @@
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { gzip } from 'pako';
 
-import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { AuthToken, notifyAuthLost } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { createStandaloneRefreshApi, refreshAccessToken } from '@/client-side.Commons/userSession/userSessionApi';
+import { ClientSideInfoProvider } from '@/client-side.Commons/userSession/ClientSideInfoProvider';
 import { APP_URLS } from '@/client-side.Impl/config/app-urls';
-import { ClientSideInfoProvider } from '@/client-side.Impl/userSession/ClientSideInfoProvider';
+
 import { clearLogFiles, LOG_FILES_DIR, listLogFiles } from './logFileTransport';
 
 type LogPack = {
@@ -22,7 +24,7 @@ const buildLogPack = async (): Promise<LogPack | null> => {
     })
   );
 
-  const header = `----- platform: ${ClientSideInfoProvider.GetInstance().GetPlatformDescription()} -----`;
+  const header = `----- platform: ${ClientSideInfoProvider.GetInstance().PlatformDetails} -----`;
   const gzipBytes = gzip([header, ...sections].join('\n\n'));
   const fileName = `client-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.log.gz`;
   return { fileName, gzipBytes };
@@ -68,7 +70,7 @@ const postReport = (
  */
 export const submitIssueReport = async (userDescription: string, issueContext?: string): Promise<void> => {
   const pack = await buildLogPack();
-  const clientSideInfoJson = JSON.stringify(await ClientSideInfoProvider.GetInstance().GetInfo());
+  const clientSideInfoJson = JSON.stringify(ClientSideInfoProvider.Info);
   const tempPath = pack ? `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${pack.fileName}` : undefined;
   if (pack && tempPath) {
     // 'ascii' here means "array of byte values" in react-native-blob-util's encoding

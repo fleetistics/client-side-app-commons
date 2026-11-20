@@ -3,7 +3,8 @@ import { LOCATION_MESSAGES } from "./location-messages";
 import { isLocationPermissionError, LocationProviderStatus, LocationProviderStatusEnum, LocationService } from "./locationService";
 import BackgroundGeolocation, { AuthorizationStatus } from "react-native-background-geolocation";
 import type { HttpEvent, HeartbeatEvent, Location, LocationError, ProviderChangeEvent, Subscription } from '@transistorsoft/background-geolocation-types';
-import { AuthToken, createStandaloneRefreshApi, notifyAuthLost, refreshAccessToken } from "@/client-side.Commons/dataLayer/core/apiSlice";
+import { AuthToken, notifyAuthLost } from "@/client-side.Commons/dataLayer/core/apiSlice";
+import { createStandaloneRefreshApi, refreshAccessToken } from "@/client-side.Commons/userSession/userSessionApi";
 import { APP_URLS } from "@/client-side.Impl/config/app-urls";
 import { SubscribeIsAppActive } from "../app-state-context";
 

@@ -2,12 +2,8 @@ import { useSyncExternalStore } from 'react';
 
 import { APP_CONFIG } from '@/client-side.Impl/config/app-config';
 import { APP_URLS } from '@/client-side.Impl/config/app-urls';
-import {
-  AuthToken,
-  createStandaloneRefreshApi,
-  notifyAuthLost,
-  refreshAccessToken,
-} from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { AuthToken, notifyAuthLost } from '@/client-side.Commons/dataLayer/core/apiSlice';
+import { createStandaloneRefreshApi, refreshAccessToken } from '@/client-side.Commons/userSession/userSessionApi';
 import { GetIsAppActive, SubscribeIsAppActive } from '@/app.Commons/services/app-state-context';
 
 import type {
